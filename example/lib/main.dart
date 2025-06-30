@@ -1,11 +1,40 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 
 import 'miui10_anim.dart';
+import 'package:leak_tracker/leak_tracker.dart';
 
-void main() => runApp(const MyApp());
+void main() {
+  startLeakTracking();
+  runApp(const MyApp());
+}
+
+void startLeakTracking() {
+  LeakTracking.phase = const PhaseSettings(
+    leakDiagnosticConfig: LeakDiagnosticConfig(
+      collectRetainingPathForNotGCed: true,
+      collectStackTraceOnStart: true,
+      collectStackTraceOnDisposal: true,
+    ),
+  );
+  LeakTracking.start(config: LeakTrackingConfig(onLeaks: (s) async {
+    debugPrint('onLeaks: ${s.toJson()}');
+    final leaks = await LeakTracking.collectLeaks();
+    for (final n in leaks.all) {
+      debugPrint(
+        n.toYaml(
+          'leak:',
+          phasesAreTests: true,
+        ),
+      );
+    }
+  }));
+  FlutterMemoryAllocations.instance.addListener(
+      (ObjectEvent event) => LeakTracking.dispatchObjectEvent(event.toMap()));
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

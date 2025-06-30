@@ -10,6 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  leak_tracker: ^11.0.1
 
   oktoast:
     path: ../
